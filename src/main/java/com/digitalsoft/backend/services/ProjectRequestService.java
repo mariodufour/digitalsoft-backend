@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor // Lombok genera el constructor para la inyección de dependencias
+@RequiredArgsConstructor
 public class ProjectRequestService {
 
     private final ProjectRequestRepository projectRequestRepository;

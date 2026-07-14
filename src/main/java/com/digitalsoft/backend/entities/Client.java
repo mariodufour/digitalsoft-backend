@@ -17,13 +17,13 @@ public class Client {
     private Long id;
 
     @Column(name = "business_name")
-    private String businessName; // Nombre del emprendimiento
+    private String businessName;
 
     @Column(name = "contact_name", nullable = false)
-    private String contactName; // Nombre de la persona
+    private String contactName;
 
     @Column(nullable = false)
-    private String phone; // Clave para el contacto por WhatsApp
+    private String phone;
 
     private String email;
 }

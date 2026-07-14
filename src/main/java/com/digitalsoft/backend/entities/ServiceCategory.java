@@ -17,7 +17,7 @@ public class ServiceCategory {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String name; // Ej: "Página web", "Automatización"
+    private String name;
 
     @Column(length = 500)
     private String description;

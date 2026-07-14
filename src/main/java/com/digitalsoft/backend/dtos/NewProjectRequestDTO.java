@@ -10,7 +10,7 @@ public class NewProjectRequestDTO {
     private String phone;
     private String email;
 
-    // Solo necesitamos el ID del servicio que eligió en la web
+    // ID del servicio que eligió en la web
     private Long serviceCategoryId;
 
     // El mensaje donde cuenta qué necesita

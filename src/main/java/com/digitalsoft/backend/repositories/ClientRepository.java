@@ -7,6 +7,6 @@ import java.util.Optional;
 
 @Repository
 public interface ClientRepository extends JpaRepository<Client, Long> {
-    // Nos va a servir para verificar si un cliente ya existe por su teléfono (WhatsApp) antes de duplicarlo
+    // Verificar si un cliente ya existe por su teléfono (WhatsApp) antes de duplicarlo
     Optional<Client> findByPhone(String phone);
 }
