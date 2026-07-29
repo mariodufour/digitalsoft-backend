@@ -8,10 +8,16 @@ import com.digitalsoft.backend.repositories.ClientRepository;
 import com.digitalsoft.backend.repositories.ProjectRequestRepository;
 import com.digitalsoft.backend.repositories.ServiceCategoryRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +26,9 @@ public class ProjectRequestService {
     private final ProjectRequestRepository projectRequestRepository;
     private final ClientRepository clientRepository;
     private final ServiceCategoryRepository serviceCategoryRepository;
-    private final JavaMailSender mailSender;
+
+    @Value("${BREVO_API_KEY}")
+    private String apiKey;
 
     @Transactional
     public ProjectRequest createProjectRequest(NewProjectRequestDTO dto) {
@@ -55,27 +63,42 @@ public class ProjectRequestService {
         return savedRequest;
     }
 
-    // Método privado que arma y manda el mail
     private void enviarNotificacion(NewProjectRequestDTO dto) {
         try {
-            SimpleMailMessage mensaje = new SimpleMailMessage();
-            mensaje.setFrom("maritodufour76@gmail.com");
-            mensaje.setTo("maritodufour76@gmail.com");
-            mensaje.setSubject("🟢 NUEVO LEAD - Digital Soft: " + dto.getBusinessName());
+            RestTemplate restTemplate = new RestTemplate();
+            String url = "https://api.brevo.com/v3/smtp/email";
 
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("api-key", apiKey);
+            headers.set("accept", "application/json");
+
+            // 1. Armamos el texto exacto que ya tenías
             String texto = "¡Recibiste una nueva solicitud de desarrollo!\n\n"
-                    + "👨‍💼 Cliente: " + dto.getContactName() + "\n"
+                    + "👤 Cliente: " + dto.getContactName() + "\n"
                     + "🏢 Negocio: " + dto.getBusinessName() + "\n"
                     + "📱 Teléfono: " + dto.getPhone() + "\n"
                     + "✉️ Email: " + (dto.getEmail() != null && !dto.getEmail().isEmpty() ? dto.getEmail() : "No especificado") + "\n\n"
                     + "💬 Mensaje del cliente:\n" + dto.getClientMessage();
 
-            mensaje.setText(texto);
-            mailSender.send(mensaje);
+            // 2. Construimos el JSON (Payload) para Brevo
+            Map<String, Object> body = Map.of(
+                    // IMPORTANTE: En 'sender' poné el correo con el que te registraste en Brevo
+                    "sender", Map.of("name", "Digital Soft Web", "email", "maritodufour76@gmail.com"),
+                    // En 'to' poné el correo donde querés RECIBIR las notificaciones (tu Gmail personal)
+                    "to", List.of(Map.of("email", "maritodufour76@gmail.com")),
+                    "subject", "🟢 NUEVO LEAD - Digital Soft: " + dto.getBusinessName(),
+                    "textContent", texto
+            );
 
-            System.out.println("Notificación por correo enviada con éxito.");
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+            // 3. Disparamos la petición HTTP por el puerto 443 (¡Libre de bloqueos!)
+            restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+
+            System.out.println("Notificación por correo enviada con éxito mediante Brevo API.");
         } catch (Exception e) {
-            System.err.println("Error al enviar el correo: " + e.getMessage());
+            System.err.println("Error al enviar el correo por API: " + e.getMessage());
         }
     }
 }
